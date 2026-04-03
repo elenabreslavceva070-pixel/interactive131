@@ -51,23 +51,23 @@
         
         .wallet {
             background: linear-gradient(135deg, #f9d976, #f39f86);
-            padding: 8px 20px;
+            padding: 12px 20px;
             border-radius: 60px;
             display: flex;
-            gap: 12px;
             align-items: center;
+            gap: 15px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-        
-        .balance-value {
-            font-size: 28px;
-            font-weight: 800;
-            color: #2d1b00;
+            flex: 1;
+            min-width: 0;
         }
         
         .coins-stack {
             display: flex;
-            gap: 4px;
+            flex-wrap: wrap;
+            gap: 6px;
+            flex: 1;
+            justify-content: flex-start;
+            align-items: center;
         }
         
         .coin-icon {
@@ -76,10 +76,43 @@
             background: radial-gradient(circle at 35% 35%, #FFD966, #D4AF37);
             border-radius: 50%;
             display: inline-flex;
-            justify-content: center;
             align-items: center;
-            font-size: 18px;
+            justify-content: center;
+            font-size: 16px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+        
+        .coins-stack.many-coins .coin-icon {
+            width: 26px;
+            height: 26px;
+            font-size: 13px;
+        }
+        
+        .coins-stack.very-many-coins .coin-icon {
+            width: 22px;
+            height: 22px;
+            font-size: 11px;
+        }
+        
+        .balance-wrapper {
+            display: flex;
+            align-items: baseline;
+            gap: 5px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        
+        .balance-value {
+            font-size: 28px;
+            font-weight: 800;
+            color: #2d1b00;
+        }
+        
+        .balance-label {
+            font-weight: 600;
+            color: #2d1b00;
         }
         
         .question-panel {
@@ -90,6 +123,13 @@
             font-size: 1.6rem;
             font-weight: 600;
             color: #0a2540;
+            margin-bottom: 28px;
+        }
+        
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
             margin-bottom: 28px;
         }
         
@@ -323,47 +363,97 @@
             background: #ff9f1a;
             transform: translateY(-2px);
         }
+        
+        @media (max-width: 550px) {
+            .wallet {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+            
+            .coins-stack {
+                justify-content: center;
+            }
+            
+            .balance-wrapper {
+                justify-content: center;
+            }
+        }
+        
+        .reset-all-btn {
+            background: #ffb347;
+            color: #2d1b00;
+            margin: 0 20px 25px 20px;
+            width: calc(100% - 40px);
+            box-shadow: none;
+            font-weight: bold;
+        }
+        
+        .reset-all-btn:hover {
+            background: #ff9f1a;
+            transform: translateY(-2px);
+        }
     </style>
 </head>
 <body>
 <div class="trainer-container" id="app"></div>
 
 <script>
-    // Вопросы для тренажера 3
+    // ИСПРАВЛЕНО: вопросы с правильными индексами и пояснениями
     const QUESTIONS3 = [
         {
-            text: "Какой срок хранения кассовых документов в организации?",
-            options: ["1 год", "3 года", "5 лет"],
+            text: "В каком случае вы имеете право применять ККТ в автономном режиме?",
+            options: [
+                "Если хотим сократить расходы на услуги ОФД",
+                "Если временно отсутствует интернет",
+                "При плановом техническом обслуживании кассы в центре сервиса"
+            ],
+            correct: 1,
+            explanation: "В автономном режиме вы можете применять ККТ, если отсутствует интернет. Касса фиксирует расчеты и печатает чеки, но не передает данные в ОФД. После восстановления связи отправляет накопленные фискальные документы."
+        },
+        {
+            text: "Какое из нарушений будет считаться грубым и повлечет максимальный штраф?",
+            options: [
+                "Печать чека шрифтом, который не соответствует нормам",
+                "Печать чеков без QR-кода",
+                "На торговой точке установлен незарегистрированный в ФНС ККТ"
+            ],
             correct: 2,
-            explanation: "Кассовые документы должны храниться не менее 5 лет."
+            explanation: "Если вы используете незарегистрированный ККТ, это грубое нарушение. ФНС это расценивает как сокрытие выручки, и вас могут оштрафовать на максимальный штраф."
         },
         {
-            text: "Что делать при обнаружении недостачи в кассе?",
-            options: ["Списать на убытки", "Взыскать с материально-ответственного лица", "Увеличить лимит"],
+            text: "Какой из признаков при анализе данных онлайн-ККТ чаще всего указывает на то, что фирма скрывает выручки?",
+            options: [
+                "Стабильный средний чек в течение года",
+                "Наличие чеков с нулевой суммой при возвратах",
+                "Резкое снижение количества пробитых чеков при сохранении уровня закупок товара"
+            ],
+            correct: 2,
+            explanation: "Если в вашей фирме резко снизилось число чеков при прежнем объеме закупок, то это вызовет вопросы у ФНС и станет причиной дополнительной проверки."
+        },
+        {
+            text: "Вы пробили чек закрытия аванса и открытия кредита последним рабочим днем месяца, а услугу реализовали позже. Это корректно?",
+            options: [
+                "Да, чек можно пробить в конце месяца независимо от даты, когда оказали услугу",
+                "Нет, чек нужно пробить в момент, когда передаете услугу",
+                "Да, если оплата поступит в следующем месяце"
+            ],
             correct: 1,
-            explanation: "Недостача взыскивается с кассира (материально-ответственного лица)."
+            explanation: "Чек формируют в момент расчета. При отсрочке расчет возникает при передаче услуги. Пробивать чек заранее нельзя."
         },
         {
-            text: "Разрешено ли использовать кассовую технику без фискального накопителя?",
-            options: ["Да, если УСН", "Нет, запрещено", "Только при чеке"],
+            text: "ИП продает физлицу грузовой автомобиль, который три года использовал в предпринимательской деятельности. Покупатель перечислил деньги на расчетный счет. Будете ли вы в этом случае пробивать кассовый чек?",
+            options: [
+                "Нет, так как эта операция не относится к основной деятельности",
+                "Да, так как автомобиль использовали для бизнеса",
+                "Да, но только если сумма сделки будет больше 100 тыс. руб."
+            ],
             correct: 1,
-            explanation: "Кассовая техника должна быть зарегистрирована с фискальным накопителем."
-        },
-        {
-            text: "Кто имеет право подписывать кассовые документы?",
-            options: ["Главный бухгалтер и руководитель", "Любой сотрудник", "Кассир и директор"],
-            correct: 0,
-            explanation: "ПКО и РКО подписываются руководителем и главным бухгалтером (или кассиром)."
-        },
-        {
-            text: "В какой срок нужно сдавать наличные сверх лимита в банк?",
-            options: ["В течение 3 дней", "В дни инкассации или по окончании рабочего дня", "Раз в месяц"],
-            correct: 1,
-            explanation: "Сверхлимитная наличность сдаётся в банк в дни инкассации."
+            explanation: "Вы обязаны пробить кассовый чек, даже если имущество не относится к основному виду деятельности."
         }
     ];
     
-    // Товары в магазине
+    // Товары в магазине - 4 подарка
     const PRODUCTS = [
         {
             id: 1,
@@ -388,6 +478,14 @@
             description: "Полный сборник материалов по кассовым операциям",
             icon: "🎁",
             file: "gift3.pdf"
+        },
+        {
+            id: 4,
+            name: "Подарок 4",
+            price: 1600,
+            description: "Экспертный набор: чек-листы и памятки кассиру",
+            icon: "🏆",
+            file: "gift4.pdf"
         }
     ];
     
@@ -401,8 +499,8 @@
     let selected = null;
     let checked = false;
     let completed = false;
-    let showShop = false; // Показывать ли магазин после завершения
-    let purchased = []; // Купленные подарки
+    let showShop = false;
+    let purchased = [];
     
     function isTrainer2Completed() {
         return localStorage.getItem('trainer2_completed') === 'true';
@@ -422,65 +520,19 @@
         }, 3000);
     }
     
-    // Функция для генерации PDF на лету (если нет реальных файлов)
-    function generateAndDownloadPDF(productName) {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        
-        doc.setFontSize(20);
-        doc.text(productName, 20, 30);
-        doc.setFontSize(12);
-        doc.text("Поздравляем с покупкой!", 20, 50);
-        doc.text("Эта шпаргалка поможет вам в работе с кассовыми операциями.", 20, 70);
-        doc.text("Основные правила:", 20, 100);
-        doc.text("• ПКО и РКО - основные документы", 20, 120);
-        doc.text("• Лимит расчетов наличными - 100 000 руб.", 20, 140);
-        doc.text("• Срок хранения документов - 5 лет", 20, 160);
-        doc.text("• Штрафы за нарушения - до 50 000 руб.", 20, 180);
-        
-        doc.save(`${productName}.pdf`);
-    }
-    
     function downloadGift(product) {
-        // Проверяем, куплен ли уже подарок
         if (purchased.includes(product.id)) {
-            // Если уже куплен - просто скачиваем
-            if (product.file && product.file !== 'gift1.pdf') {
-                const link = document.createElement('a');
-                link.href = `pdf/${product.file}`;
-                link.download = product.file;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            } else {
-                // Генерируем PDF на лету
-                generateAndDownloadPDF(product.name);
-            }
-            showMessage(`📥 "${product.name}" скачивается...`);
+            showMessage(`📥 "${product.name}" уже куплен. Скачивание...`);
             return;
         }
         
-        // Проверяем достаточно ли монет
         if (balance >= product.price) {
             balance -= product.price;
             purchased.push(product.id);
             savePurchased();
             updateBalanceUI();
-            
-            // Скачиваем или генерируем PDF
-            if (product.file && product.file !== 'gift1.pdf') {
-                const link = document.createElement('a');
-                link.href = `pdf/${product.file}`;
-                link.download = product.file;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            } else {
-                generateAndDownloadPDF(product.name);
-            }
-            
             showMessage(`🎉 Поздравляем! Вы купили "${product.name}" за ${product.price} монет!`);
-            renderShop(); // Обновляем магазин
+            renderShop();
         } else {
             showMessage(`😔 Недостаточно монет! Нужно ${product.price} монет. У вас ${balance} монет.`, true);
         }
@@ -518,7 +570,7 @@
     }
     
     function restartGame() {
-        if (confirm('Вы хотите начать тренажеры заново? Это сбросит прогресс, но вы сможете накопить больше монет для покупки подарков.')) {
+        if (confirm('Вы хотите начать тренажеры заново? Купленные подарки останутся. Вы сможете накопить больше монет.')) {
             localStorage.removeItem('trainer1_completed');
             localStorage.removeItem('trainer1_balance');
             localStorage.removeItem('trainer1_progress');
@@ -585,12 +637,21 @@
             setTimeout(() => balSpan.classList.remove('animate-pop'), 300);
         }
         
-        let stack = document.querySelector('.coins-stack');
+        const stack = document.querySelector('.coins-stack');
         if (stack) {
             stack.innerHTML = '';
-            let cnt = Math.min(8, Math.floor(Math.abs(balance) / 100) + 1);
-            if (cnt === 0 && balance > 0) cnt = 1;
-            for (let i = 0; i < cnt; i++) {
+            
+            let coinsCount = Math.floor(balance / 100);
+            if (coinsCount < 0) coinsCount = 0;
+            
+            stack.classList.remove('many-coins', 'very-many-coins');
+            if (coinsCount > 20) {
+                stack.classList.add('very-many-coins');
+            } else if (coinsCount > 12) {
+                stack.classList.add('many-coins');
+            }
+            
+            for (let i = 0; i < coinsCount; i++) {
                 let c = document.createElement('span');
                 c.className = 'coin-icon';
                 c.innerText = '💰';
@@ -668,8 +729,10 @@
                 <div class="progress-area">🎁 Магазин подарков</div>
                 <div class="wallet">
                     <div class="coins-stack"></div>
-                    <span class="balance-value">${balance}</span>
-                    <span>монет</span>
+                    <div class="balance-wrapper">
+                        <span class="balance-value">${balance}</span>
+                        <span class="balance-label">монет</span>
+                    </div>
                 </div>
             </div>
             <div class="question-panel">
@@ -717,13 +780,15 @@
                     <div class="progress-area">Итоговый тренажёр</div>
                     <div class="wallet">
                         <div class="coins-stack"></div>
-                        <span class="balance-value">${overallBalance}</span>
-                        <span>монет</span>
+                        <div class="balance-wrapper">
+                            <span class="balance-value">${overallBalance}</span>
+                            <span class="balance-label">монет</span>
+                        </div>
                     </div>
                 </div>
                 <div class="question-panel">
                     <div style="background: #eef2ff; border-radius: 32px; padding: 30px; text-align: center;">
-                        <h3>🎓 Обучение завершено!</h3>
+                        <h3></h3>
                         <p style="margin: 20px 0; font-size: 1.1rem;">${message}</p>
                         <p style="font-size: 1.3rem; font-weight: bold; margin: 20px 0;">
                             <strong>Финальный баланс: ${overallBalance} монет</strong>
@@ -776,9 +841,10 @@
         let expl = '';
         if (checked) {
             let corr = (selected === q.correct);
+            const pointsText = corr ? '✅ Верно +200 🪙' : '❌ Ошибка -300 🪙';
             expl = `
                 <div class="explanation-area ${corr ? 'explanation-correct' : 'explanation-wrong'}">
-                    <strong>${corr ? '✅ Верно' : '❌ Ошибка'}</strong><br>
+                    <strong>${pointsText}</strong><br>
                     ${q.explanation}
                 </div>
             `;
@@ -789,8 +855,10 @@
                 <div class="progress-area">Вопрос ${currentIdx+1}/${QUESTIONS3.length}</div>
                 <div class="wallet">
                     <div class="coins-stack"></div>
-                    <span class="balance-value">${balance}</span>
-                    <span>монет</span>
+                    <div class="balance-wrapper">
+                        <span class="balance-value">${balance}</span>
+                        <span class="balance-label">монет</span>
+                    </div>
                 </div>
             </div>
             <div class="question-panel">
@@ -818,7 +886,6 @@
         updateBalanceUI();
     }
     
-    // Глобальные функции для вызова из onclick
     window.downloadGiftFromGlobal = function(productId) {
         const product = PRODUCTS.find(p => p.id === productId);
         if (product) {
@@ -828,14 +895,6 @@
     
     window.restartGameFromGlobal = restartGame;
     window.resetAllFromGlobal = resetAllTrainers;
-    
-    // Подключаем jsPDF для генерации PDF
-    const script = document.createElement('script');
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-    script.onload = () => {
-        console.log('jsPDF загружен');
-    };
-    document.head.appendChild(script);
     
     const app = document.getElementById('app');
     loadData();
